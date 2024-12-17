@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from './database/database.module';
-import { GraphqlModule } from './graphql/graphql.module';
+import { DatabaseModule } from './core/database/database.module';
+import { GraphqlModule } from './core/graphql/graphql.module';
 import { GraphQLDateTime } from 'graphql-scalars';
 
 @Module({

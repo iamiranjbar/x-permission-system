@@ -1026,13 +1026,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@keyv/serialize@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@keyv/serialize/-/serialize-1.0.1.tgz"
-  integrity sha512-kKXeynfORDGPUEEl2PvTExM2zs+IldC6ZD8jPcfvI351MDNtfMlw9V9s4XZXuJNDK2qR5gbEKxRyoYx3quHUVQ==
-  dependencies:
-    buffer "^6.0.3"
-
 "@ljharb/through@^2.3.12":
   version "2.3.13"
   resolved "https://registry.npmjs.org/@ljharb/through/-/through-2.3.13.tgz"
@@ -2321,12 +2314,15 @@ bytes@3.1.2:
   resolved "https://registry.npmjs.org/bytes/-/bytes-3.1.2.tgz"
   integrity sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==
 
-cache-manager@^6.3.1:
-  version "6.3.1"
-  resolved "https://registry.yarnpkg.com/cache-manager/-/cache-manager-6.3.1.tgz#723ed91489b28b39e8a2a2f3f98aceea57493fd5"
-  integrity sha512-Q8cTcjGzUaTfw/IBOZcUbu0/IUbybOy/+zQO9uluxqFIkfFb/YBZo2HVK8RLRvugeGABzi1vwVctCHQZV2Q2Ww==
+cache-manager@5:
+  version "5.7.6"
+  resolved "https://registry.yarnpkg.com/cache-manager/-/cache-manager-5.7.6.tgz#bdd8a154c73e5233824aa09ceb359ed225d37b7e"
+  integrity sha512-wBxnBHjDxF1RXpHCBD6HGvKER003Ts7IIm0CHpggliHzN1RZditb7rXoduE1rplc2DEFYKxhLKgFuchXMJje9w==
   dependencies:
-    keyv "^5.2.1"
+    eventemitter3 "^5.0.1"
+    lodash.clonedeep "^4.5.0"
+    lru-cache "^10.2.2"
+    promise-coalesce "^1.1.2"
 
 call-bind-apply-helpers@^1.0.0, call-bind-apply-helpers@^1.0.1:
   version "1.0.1"
@@ -2793,9 +2789,9 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dotenv@^16.0.3:
+dotenv@^16.0.3, dotenv@^16.4.7:
   version "16.4.7"
-  resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.4.7.tgz"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.7.tgz#0e20c5b82950140aa99be360a8a5f52335f53c26"
   integrity sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==
 
 dset@^3.1.2:
@@ -3057,6 +3053,11 @@ eventemitter3@^3.1.0:
   resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-3.1.2.tgz"
   integrity sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==
 
+eventemitter3@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
+  integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
+
 events@^3.2.0:
   version "3.3.0"
   resolved "https://registry.npmjs.org/events/-/events-3.3.0.tgz"
@@ -3093,7 +3094,7 @@ expect@^29.0.0, expect@^29.7.0:
     jest-message-util "^29.7.0"
     jest-util "^29.7.0"
 
-express@4.21.2, express@^4.21.1:
+express@4.21.2, express@^4.17.1, express@^4.21.1:
   version "4.21.2"
   resolved "https://registry.npmjs.org/express/-/express-4.21.2.tgz"
   integrity sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==
@@ -4279,13 +4280,6 @@ keyv@^4.5.3:
   dependencies:
     json-buffer "3.0.1"
 
-keyv@^5.2.1:
-  version "5.2.2"
-  resolved "https://registry.npmjs.org/keyv/-/keyv-5.2.2.tgz"
-  integrity sha512-CRPP4Sq5ofbUE8s4FOirFmDgHeKZFRrH/8+WOUNvLJiMIplRMfnMjxmbaDb+zVd7ex0gGAWqMhZHfcL2u6PrNQ==
-  dependencies:
-    "@keyv/serialize" "^1.0.1"
-
 kleur@^3.0.3:
   version "3.0.3"
   resolved "https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz"
@@ -4332,6 +4326,11 @@ locate-path@^6.0.0:
   integrity sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
   dependencies:
     p-locate "^5.0.0"
+
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+  integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
 
 lodash.defaults@^4.2.0:
   version "4.2.0"
@@ -4398,7 +4397,7 @@ loose-envify@^1.4.0:
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-7.13.1.tgz"
   integrity sha512-CHqbAq7NFlW3RSnoWXLJBxCWaZVBrfa9UEHId2M3AW8iEBurbqduNexEUCGc3SHc6iCYXNJCDi903LajSVAEPQ==
 
-lru-cache@^10.2.0:
+lru-cache@^10.2.0, lru-cache@^10.2.2:
   version "10.4.3"
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz"
   integrity sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==
@@ -5009,6 +5008,11 @@ process-nextick-args@~2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-2.0.1.tgz"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
+
+promise-coalesce@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/promise-coalesce/-/promise-coalesce-1.1.2.tgz#5d3bc4d0b2cf2e41e9df7cbeb6519b2a09459e3d"
+  integrity sha512-zLaJ9b8hnC564fnJH6NFSOGZYYdzrAJn2JUUIwzoQb32fG2QAakpDNM+CZo1km6keXkRXRM+hml1BFAPVnPkxg==
 
 prompts@^2.0.1:
   version "2.4.2"
@@ -6027,7 +6031,7 @@ webpack-sources@^3.2.3:
   resolved "https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.2.3.tgz"
   integrity sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==
 
-webpack@5.97.1:
+webpack@5.97.1, webpack@^5.0.0:
   version "5.97.1"
   resolved "https://registry.npmjs.org/webpack/-/webpack-5.97.1.tgz"
   integrity sha512-EksG6gFY3L1eFMROS/7Wzgrii5mBAFe4rIr3r2BTfo7bcc+DWwFZ4OJ/miOuHJO/A85HwyI4eQ0F6IKXesO7Fg==

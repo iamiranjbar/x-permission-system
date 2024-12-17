@@ -19,10 +19,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "migration:generate": "npm run typeorm migration:generate -- -d src/database/dbConfig.ts",
+    "migration:generate": "npm run typeorm migration:generate -- -d src/core/database/dbConfig.ts",
     "migration:create": "npm run typeorm migration:create -- ",
-    "migration:revert": "npm run typeorm migration:revert -- -d src/database/dbConfig.ts",
-    "migration:run": "npm run typeorm migration:run -- -d src/database/dbConfig.ts"
+    "migration:revert": "npm run typeorm migration:revert -- -d src/core/database/dbConfig.ts",
+    "migration:run": "npm run typeorm migration:run -- -d src/core/database/dbConfig.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.11.2",
@@ -34,9 +34,11 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/typeorm": "^10.0.2",
     "apollo-server-express": "^3.13.0",
-    "cache-manager": "^6.3.1",
+    "cache-manager": "5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.17.1",
     "graphql": "^16.10.0",
     "graphql-scalars": "^1.24.0",
     "graphql-tools": "^9.0.8",
@@ -45,7 +47,8 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "ts-morph": "^24.0.0",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "webpack": "^5.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
