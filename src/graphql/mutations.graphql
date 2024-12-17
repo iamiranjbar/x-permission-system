@@ -1,0 +1,16 @@
+type Mutation {
+    """
+    Create a group that can be used for permissions
+    """
+    createGroup(input: CreateGroup!): Group!
+
+    """
+    Create a Tweet
+    """
+    createTweet(input: CreateTweet!): Tweet!
+
+    """
+    Updates Tweet permissions based on the input
+    """
+    updateTweetPermissions(input: UpdateTweetPermissions!): Boolean!
+}

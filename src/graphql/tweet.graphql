@@ -1,0 +1,69 @@
+enum TweetCategory {
+    Sport
+    Finance
+    Tech
+    News
+}
+
+input CreateTweet {
+    authorId: String!
+    content: String!
+    hashtags: [String!]
+
+    """
+    The ID of the parent tweet, if the tweet has no parent, it can be null
+    """
+    parentTweetId: String
+
+    category: TweetCategory
+    location: String
+}
+
+scalar DateTime
+
+type Tweet {
+    id: String!
+    createdAt: DateTime!
+    authorId: String!
+    content: String!
+    hashtags: [String!]
+    parentTweetId: String
+    category: TweetCategory
+    location: String
+}
+
+type PaginatedTweet {
+    nodes: [Tweet!]!
+
+    """
+    Indicates whether or not the pagination has more results to show. If true, next page is available
+    """
+    hasNextPage: Boolean!
+}
+
+input FilterTweet {
+    """
+    If provided, filter tweets by Author ID
+    """
+    authorId: String
+
+    """
+    If provided, filter tweets by the given hashtag
+    """
+    hashtag: String
+
+    """
+    If provided, filter tweets that are direct reply to the given tweet ID
+    """
+    parentTweetId: String
+
+    """
+    If provided, filter tweets by category
+    """
+    category: TweetCategory
+
+    """
+    If provided, filter tweets by location
+    """
+    location: String
+}

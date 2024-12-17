@@ -1,0 +1,17 @@
+input CreateGroup {
+    """
+    The user IDs that are part this Group
+    """
+    userIds: [String!]!
+
+    """
+    The group IDs that are part of this Group
+    """
+    groupIds: [String!]!
+}
+
+type Group {
+    id: String!
+    userIds: [String!]!
+    groupIds: [String!]!
+}
