@@ -1,18 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { dbConfig } from "./dbConfig";
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'password',
-      database: 'permission_system',
-      autoLoadEntities: true,
-      synchronize: true, // Disable in production
-    }),
+    TypeOrmModule.forRoot(dbConfig),
   ],
 })
 export class DatabaseModule {}
