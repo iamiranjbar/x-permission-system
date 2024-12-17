@@ -1,16 +1,16 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
+  PrimaryGeneratedColumn,
   CreateDateColumn,
 } from 'typeorm';
 
-@Entity('users')
-export class User {
+@Entity('groups')
+export class Group {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: false })
+  @Column('varchar', { length: 200, nullable: false, unique: true })
   name: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
