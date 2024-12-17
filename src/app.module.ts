@@ -8,8 +8,7 @@ import { PermissionModule } from './modules/permission/permission.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
-  // imports: [DatabaseModule, GraphqlModule, GroupModule, TweetModule, PermissionModule, UserModule],
-  imports: [DatabaseModule, GraphqlModule, UserModule, GroupModule],
+  imports: [DatabaseModule, GraphqlModule, UserModule, GroupModule, TweetModule],
   providers: [
     {
       provide: 'DateTime',
