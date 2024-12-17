@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Group } from './group.entity';
-import { MemberType } from '../../../common/enums/member_type.enum';
+import { MemberType } from '../enums/member_type.enum';
 
 @Entity('group_memberships')
 export class GroupMembership {
