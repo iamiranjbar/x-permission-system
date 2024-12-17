@@ -10,8 +10,8 @@ export const dbConfig: DataSourceOptions = {
   database: process.env.DB_NAME || 'permission_system',
   synchronize: process.env.DB_SYNC === 'true',
   migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
-  migrations: ['dist/database/migrations/**/*.js'],
-  entities: ['dist/modules/**/*.entity{.js,.ts}'],
+  migrations: ['dist/core/database/migrations/**/*.js'],
+  entities: ['dist/modules/**/**/*.entity{.js,.ts}'],
   logging: process.env.DB_LOGGING === 'true',
 };
 
