@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { TweetCategory } from '../enums/tweet-category.enum';
 
@@ -33,8 +40,6 @@ export class Tweet {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   location?: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
 
   @Column({ type: 'boolean', default: true })
   inheritViewPermissions: boolean;

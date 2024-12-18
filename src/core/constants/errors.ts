@@ -5,5 +5,5 @@ export const Errors = {
   },
   User: {
     IdNotExist: 'At least one of user ids do not exist.',
-  }
+  },
 }

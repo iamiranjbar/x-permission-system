@@ -10,7 +10,7 @@ import { GraphQLError } from 'graphql/error';
       typePaths: ['src/core/graphql/*.graphql'],
       playground: true,
       formatError: (error: GraphQLError) => {
-        const originalError = (error.extensions?.originalError as any);
+        const originalError = error.extensions?.originalError as any;
         return {
           message: originalError?.message,
           code: originalError?.error || 'INTERNAL_SERVER_ERROR',

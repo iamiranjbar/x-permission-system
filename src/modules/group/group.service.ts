@@ -79,7 +79,7 @@ export class GroupService {
     const existed_counts = await this.groupRepository.count({
       where: {
         id: In(ids),
-      }
+      },
     });
     return existed_counts === ids.length;
   }

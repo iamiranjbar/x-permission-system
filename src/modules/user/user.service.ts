@@ -15,7 +15,7 @@ export class UserService {
     const existed_counts = await this.userRepository.count({
       where: {
         id: In(ids),
-      }
+      },
     });
     return existed_counts === ids.length;
   }
