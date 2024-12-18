@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
@@ -8,7 +8,6 @@ import { UpdateTweetPermissionsDto } from './dto/tweet-permission.dto';
 import { TweetService } from '../tweet/tweet.service';
 import { User } from '../user/entities/user.entity';
 import { GroupService } from '../group/group.service';
-import { Errors } from '../../core/constants/errors';
 import { UserService } from '../user/user.service';
 
 @Injectable()
