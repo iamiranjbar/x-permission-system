@@ -9,8 +9,8 @@ import { UserModule } from '../user/user.module';
 const GroupRepositories = TypeOrmModule.forFeature([Group, GroupMembership]);
 
 @Module({
-  imports: [GroupRepositories, UserModule],
-  providers: [GroupService, GroupResolver],
-  exports: [GroupRepositories],
+  imports: [GroupRepositories, UserModule,],
+  providers: [GroupService, GroupResolver,],
+  exports: [GroupRepositories, GroupService,],
 })
 export class GroupModule {}

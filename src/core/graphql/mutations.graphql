@@ -12,5 +12,5 @@ type Mutation {
     """
     Updates Tweet permissions based on the input
     """
-    updateTweetPermissions(input: UpdateTweetPermissions!): Boolean!
+    updateTweetPermissions(tweetId: String!, input: UpdateTweetPermissions!): Boolean!
 }

@@ -14,14 +14,26 @@ input UpdateTweetPermissions {
     inheritEditPermissions: Boolean!
 
     """
-    A list of User IDs and Group IDs that can view this Tweet
+    A list of User IDs  that can view this Tweet
     It only applies if "inheritViewPermissions" is false
     """
-    viewPermissions: [String!]!
+    userViewPermissions: [String!]!
 
     """
-    A list of User IDs and Group IDs that can edit this Tweet
+    A list of Group IDs  that can view this Tweet
+    It only applies if "inheritViewPermissions" is false
+    """
+    groupViewPermissions: [String!]!
+
+    """
+    A list of User ID that can edit this Tweet
     It only applies if "inheritEditPermissions" is false
     """
-    editPermissions: [String!]!
+    userEditPermissions: [String!]!
+
+    """
+    A list of Group ID that can edit this Tweet
+    It only applies if "inheritEditPermissions" is false
+    """
+    groupEditPermissions: [String!]!
 }

@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { CreateTweetDto, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
 import { User } from '../user/entities/user.entity';
+import { PermissionService } from '../permission/permission.service';
 
 @Injectable()
 export class TweetService {
@@ -13,6 +14,8 @@ export class TweetService {
     private readonly tweetRepository: Repository<Tweet>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject(forwardRef(() => PermissionService))
+    private readonly permissionService: PermissionService,
   ) {}
 
   private async getParentTweet(createTweetDto: CreateTweetDto): Promise<Tweet> {
@@ -49,10 +52,26 @@ export class TweetService {
       parentTweet: parentTweet,
     });
     const savedTweet = await this.tweetRepository.save(tweet);
+
+    await this.permissionService.addPermissionForAuthor(savedTweet, author);
     return {
       ...savedTweet,
       authorId: author.id,
       parentTweetId: parentTweet?.id,
     };
+  }
+
+  public async getTweetById(id: string): Promise<Tweet> {
+    const tweet = await this.tweetRepository.findOne({ where: { id: id } });
+    if (!tweet) {
+      throw new NotFoundException(Errors.Tweet.NotFound);
+    }
+    return tweet;
+  }
+
+  public async updateTweetInheritance(tweet: Tweet, inheritViewPermissions: boolean, inheritEditPermissions: boolean): Promise<Tweet> {
+    tweet.inheritViewPermissions = inheritViewPermissions;
+    tweet.inheritEditPermissions = inheritEditPermissions;
+    return this.tweetRepository.save(tweet);
   }
 }

@@ -18,7 +18,7 @@ export class GroupService {
     private readonly userService: UserService,
   ) {}
 
-  private async checkIdsValidity(userIds: string[], groupIds: string[]): Promise<void> {
+  public async checkIdsValidity(userIds: string[], groupIds: string[]): Promise<void> {
     if (!await this.userService.doAllIdsExists(userIds))
       throw new NotFoundException(Errors.User.IdNotExist);
     if (!await this.doAllIdsExists(groupIds))

@@ -9,5 +9,6 @@ export const Errors = {
   Tweet: {
     ParentTweetNotFound: 'Parent tweet not found',
     AuthorNotFound: 'Author of tweet not found',
+    NotFound: 'Tweet not found',
   },
 }
