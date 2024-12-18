@@ -4,13 +4,15 @@ import { IsArray, IsDate, IsOptional, IsUUID } from 'class-validator';
 export class GroupDto {
   id: string;
 
+  @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
-  userIds: string[];
+  userIds?: string[];
 
+  @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
-  groupIds: string[];
+  groupIds?: string[];
 
   @IsDate()
   createdAt: Date;

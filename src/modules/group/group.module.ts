@@ -4,11 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Group } from './entities/group.entity';
 import { GroupMembership } from './entities/group-membership.entity';
 import { GroupResolver } from './group.resolver';
+import { UserModule } from '../user/user.module';
 
 const GroupRepositories = TypeOrmModule.forFeature([Group, GroupMembership]);
 
 @Module({
-  imports: [GroupRepositories],
+  imports: [GroupRepositories, UserModule],
   providers: [GroupService, GroupResolver],
   exports: [GroupRepositories],
 })

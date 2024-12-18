@@ -2,16 +2,16 @@ input CreateGroup {
     """
     The user IDs that are part this Group
     """
-    userIds: [String!]!
+    userIds: [String!]
 
     """
     The group IDs that are part of this Group
     """
-    groupIds: [String!]!
+    groupIds: [String!]
 }
 
 type Group {
     id: String!
-    userIds: [String!]!
-    groupIds: [String!]!
+    userIds: [String!]
+    groupIds: [String!]
 }
