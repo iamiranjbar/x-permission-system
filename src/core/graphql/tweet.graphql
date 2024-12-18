@@ -17,6 +17,8 @@ input CreateTweet {
 
     category: TweetCategory
     location: String
+    inheritViewPermissions: Boolean
+    inheritEditPermissions: Boolean
 }
 
 scalar DateTime
@@ -30,6 +32,8 @@ type Tweet {
     parentTweetId: String
     category: TweetCategory
     location: String
+    inheritViewPermissions: Boolean
+    inheritEditPermissions: Boolean
 }
 
 type PaginatedTweet {

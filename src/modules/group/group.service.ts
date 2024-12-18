@@ -50,8 +50,8 @@ export class GroupService {
     await this.membershipRepository.save(memberships);
   }
 
-  public async createGroup(input: CreateGroupDto): Promise<GroupDto> {
-    const { userIds, groupIds } = input;
+  public async createGroup(createGroupDto: CreateGroupDto): Promise<GroupDto> {
+    const { userIds, groupIds } = createGroupDto;
 
     if (
       (!userIds || userIds.length === 0) &&
