@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsRelations, RelationOptions, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { CreateTweetDto, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
@@ -66,8 +66,15 @@ export class TweetService {
     };
   }
 
-  public async getTweetById(id: string): Promise<Tweet> {
-    const tweet = await this.tweetRepository.findOne({ where: { id: id } });
+  public async getTweetById(
+    id: string,
+    relations?: FindOptionsRelations<Tweet>,
+  ): Promise<Tweet> {
+    const tweet = await this.tweetRepository.findOne({
+      where: { id },
+      relations,
+    });
+
     if (!tweet) {
       throw new NotFoundException(Errors.Tweet.NotFound);
     }
@@ -82,5 +89,9 @@ export class TweetService {
     tweet.inheritViewPermissions = inheritViewPermissions;
     tweet.inheritEditPermissions = inheritEditPermissions;
     return this.tweetRepository.save(tweet);
+  }
+
+  public async canEditTweet(userId: string, tweetId: string): Promise<boolean> {
+    return await this.permissionService.canEditTweet(userId, tweetId);
   }
 }

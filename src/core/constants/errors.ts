@@ -5,6 +5,7 @@ export const Errors = {
   },
   User: {
     IdNotExist: 'At least one of user ids do not exist.',
+    NotFound: 'User not found',
   },
   Tweet: {
     ParentTweetNotFound: 'Parent tweet not found',

@@ -90,4 +90,42 @@ export class GroupService {
     });
     return existed_counts === ids.length;
   }
+
+  public async getAllGroupIdsForUser(userId: string): Promise<string[]> {
+    const directUserGroups = await this.membershipRepository.find({
+      where: { memberId: userId },
+      relations: ['group'],
+    });
+    const directGroupIds = directUserGroups.map(
+      (membership) => membership.group.id,
+    );
+
+    return await this.getAllGroupIds(directGroupIds);
+  }
+
+  private async getAllGroupIds(groupIds: string[]): Promise<string[]> {
+    const visited: Set<string> = new Set<string>();
+    const queue: string[] = [...groupIds];
+
+    while (queue.length > 0) {
+      const currentGroupId: string = queue.shift();
+      if (visited.has(currentGroupId)) {
+        continue;
+      }
+      visited.add(currentGroupId);
+
+      // Find parent groups for the current group
+      const parentGroups: GroupMembership[] =
+        await this.membershipRepository.find({
+          where: { memberId: currentGroupId },
+          relations: ['group'],
+        });
+
+      const parentGroupIds: string[] = parentGroups.map(
+        (membership) => membership.group.id,
+      );
+      queue.push(...parentGroupIds);
+    }
+    return Array.from(visited);
+  }
 }
