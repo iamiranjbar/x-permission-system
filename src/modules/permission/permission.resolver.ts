@@ -11,6 +11,9 @@ export class PermissionResolver {
     @Args('tweetId') tweetId: string,
     @Args('input') updateTweetPermissionsDto: UpdateTweetPermissionsDto,
   ): Promise<boolean> {
-    return this.permissionService.updateTweetPermissions(tweetId, updateTweetPermissionsDto);
+    return this.permissionService.updateTweetPermissions(
+      tweetId,
+      updateTweetPermissionsDto,
+    );
   }
 }

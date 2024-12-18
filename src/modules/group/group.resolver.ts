@@ -8,7 +8,9 @@ export class GroupResolver {
   constructor(private readonly groupService: GroupService) {}
 
   @Mutation(() => GroupDto)
-  async createGroup(@Args('input') createGroupDto: CreateGroupDto): Promise<GroupDto> {
+  async createGroup(
+    @Args('input') createGroupDto: CreateGroupDto,
+  ): Promise<GroupDto> {
     return await this.groupService.createGroup(createGroupDto);
   }
 }

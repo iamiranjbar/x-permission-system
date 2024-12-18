@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
@@ -18,10 +22,13 @@ export class GroupService {
     private readonly userService: UserService,
   ) {}
 
-  public async checkIdsValidity(userIds: string[], groupIds: string[]): Promise<void> {
-    if (!await this.userService.doAllIdsExists(userIds))
+  public async checkIdsValidity(
+    userIds: string[],
+    groupIds: string[],
+  ): Promise<void> {
+    if (!(await this.userService.doAllIdsExists(userIds)))
       throw new NotFoundException(Errors.User.IdNotExist);
-    if (!await this.doAllIdsExists(groupIds))
+    if (!(await this.doAllIdsExists(groupIds)))
       throw new NotFoundException(Errors.Group.IdNotExist);
   }
 

@@ -7,7 +7,9 @@ export class TweetResolver {
   constructor(private readonly tweetService: TweetService) {}
 
   @Mutation(() => TweetDto)
-  async createTweet(@Args('input') createTweetDto: CreateTweetDto): Promise<TweetDto> {
+  async createTweet(
+    @Args('input') createTweetDto: CreateTweetDto,
+  ): Promise<TweetDto> {
     return await this.tweetService.createTweet(createTweetDto);
   }
 }

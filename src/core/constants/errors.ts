@@ -11,4 +11,4 @@ export const Errors = {
     AuthorNotFound: 'Author of tweet not found',
     NotFound: 'Tweet not found',
   },
-}
+};

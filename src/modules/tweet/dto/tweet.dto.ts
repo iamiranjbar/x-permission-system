@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsArray, IsUUID, ValidateIf, IsDate, IsEnum, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  IsDate,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
 import { TweetCategory } from '../enums/tweet-category.enum';
 import { OmitType } from '@nestjs/mapped-types';
 
@@ -39,7 +47,4 @@ export class TweetDto {
   inheritEditPermissions?: boolean;
 }
 
-export class CreateTweetDto extends OmitType(TweetDto, [
-  'id',
-  'createdAt',
-]) {}
+export class CreateTweetDto extends OmitType(TweetDto, ['id', 'createdAt']) {}

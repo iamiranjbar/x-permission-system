@@ -1,4 +1,9 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
@@ -34,7 +39,7 @@ export class TweetService {
     const author = await this.userRepository.findOne({
       where: {
         id: createTweetDto.authorId,
-      }
+      },
     });
     if (!author) {
       throw new NotFoundException(Errors.Tweet.AuthorNotFound);
@@ -69,7 +74,11 @@ export class TweetService {
     return tweet;
   }
 
-  public async updateTweetInheritance(tweet: Tweet, inheritViewPermissions: boolean, inheritEditPermissions: boolean): Promise<Tweet> {
+  public async updateTweetInheritance(
+    tweet: Tweet,
+    inheritViewPermissions: boolean,
+    inheritEditPermissions: boolean,
+  ): Promise<Tweet> {
     tweet.inheritViewPermissions = inheritViewPermissions;
     tweet.inheritEditPermissions = inheritEditPermissions;
     return this.tweetRepository.save(tweet);

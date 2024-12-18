@@ -18,6 +18,8 @@ export class Group {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @OneToMany(() => GroupMembership, (membership) => membership.group, { cascade: true })
+  @OneToMany(() => GroupMembership, (membership) => membership.group, {
+    cascade: true,
+  })
   members: GroupMembership[];
 }

@@ -17,13 +17,17 @@ export class PermissionService {
     private readonly groupService: GroupService,
     @Inject(forwardRef(() => TweetService))
     private readonly tweetService: TweetService,
-  ) {
-  }
+  ) {}
 
-  async updateTweetPermissions(tweetId: string, updateTweetPermissionsDto: UpdateTweetPermissionsDto): Promise<boolean> {
+  async updateTweetPermissions(
+    tweetId: string,
+    updateTweetPermissionsDto: UpdateTweetPermissionsDto,
+  ): Promise<boolean> {
     const tweet: Tweet = await this.tweetService.getTweetById(tweetId);
     await this.tweetService.updateTweetInheritance(
-      tweet, updateTweetPermissionsDto.inheritViewPermissions, updateTweetPermissionsDto.inheritEditPermissions
+      tweet,
+      updateTweetPermissionsDto.inheritViewPermissions,
+      updateTweetPermissionsDto.inheritEditPermissions,
     );
 
     if (!updateTweetPermissionsDto.inheritViewPermissions) {
@@ -45,7 +49,10 @@ export class PermissionService {
     return true;
   }
 
-  private async clearExistingPermissions(tweet: Tweet, permissionType: PermissionType): Promise<void> {
+  private async clearExistingPermissions(
+    tweet: Tweet,
+    permissionType: PermissionType,
+  ): Promise<void> {
     await this.permissionRepository.delete({
       tweet: { id: tweet.id },
       permissionType: permissionType,
@@ -56,7 +63,7 @@ export class PermissionService {
     permittedIds: string[],
     permittedType: PermittedType,
     tweet: Tweet,
-    permissionType: PermissionType
+    permissionType: PermissionType,
   ): Promise<Permission[]> {
     return permittedIds.map((id) =>
       this.permissionRepository.create({
@@ -74,15 +81,32 @@ export class PermissionService {
     permittedGroupIds: string[],
     permissionType: PermissionType,
   ): Promise<void> {
-    await this.groupService.checkIdsValidity(permittedUserIds, permittedGroupIds);
+    await this.groupService.checkIdsValidity(
+      permittedUserIds,
+      permittedGroupIds,
+    );
     await this.clearExistingPermissions(tweet, permissionType);
-    const userPermissions: Permission[] = await this.createNewPermissions(permittedUserIds, PermittedType.User, tweet, permissionType);
-    const groupPermissions: Permission[] = await this.createNewPermissions(permittedGroupIds, PermittedType.Group, tweet, permissionType);
+    const userPermissions: Permission[] = await this.createNewPermissions(
+      permittedUserIds,
+      PermittedType.User,
+      tweet,
+      permissionType,
+    );
+    const groupPermissions: Permission[] = await this.createNewPermissions(
+      permittedGroupIds,
+      PermittedType.Group,
+      tweet,
+      permissionType,
+    );
     const permissions: Permission[] = [...userPermissions, ...groupPermissions];
     await this.permissionRepository.save(permissions);
   }
 
-  public async addUserPermission(tweet: Tweet, user: User, permissionType: PermissionType): Promise<void> {
+  public async addUserPermission(
+    tweet: Tweet,
+    user: User,
+    permissionType: PermissionType,
+  ): Promise<void> {
     const userPermission: Permission = this.permissionRepository.create({
       permittedId: user.id,
       permittedEntityType: PermittedType.User,
@@ -92,7 +116,10 @@ export class PermissionService {
     await this.permissionRepository.save(userPermission);
   }
 
-  public async addPermissionForAuthor(tweet: Tweet, author: User): Promise<void> {
+  public async addPermissionForAuthor(
+    tweet: Tweet,
+    author: User,
+  ): Promise<void> {
     await this.addUserPermission(tweet, author, PermissionType.View);
     await this.addUserPermission(tweet, author, PermissionType.Edit);
   }

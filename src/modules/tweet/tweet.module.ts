@@ -9,12 +9,8 @@ import { PermissionModule } from '../permission/permission.module';
 const TweetRepository = TypeOrmModule.forFeature([Tweet]);
 
 @Module({
-  imports: [
-    TweetRepository,
-    UserModule,
-    forwardRef(() => PermissionModule)
-  ],
-  providers: [TweetService, TweetResolver,],
-  exports: [TweetRepository, TweetService,],
+  imports: [TweetRepository, UserModule, forwardRef(() => PermissionModule)],
+  providers: [TweetService, TweetResolver],
+  exports: [TweetRepository, TweetService],
 })
 export class TweetModule {}
