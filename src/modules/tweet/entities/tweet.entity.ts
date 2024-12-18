@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { TweetCategory } from '../enums/tweet-category.enum';
+import { Permission } from '../../permission/entities/permission.entity';
 
 @Entity('tweets')
 export class Tweet {
@@ -46,4 +48,9 @@ export class Tweet {
 
   @Column({ type: 'boolean', default: true })
   inheritEditPermissions: boolean;
+
+  @OneToMany(() => Permission, (permission) => permission.tweet, {
+    cascade: true,
+  })
+  permissions: Permission[];
 }

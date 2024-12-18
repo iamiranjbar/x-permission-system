@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { TweetCategory } from '../enums/tweet-category.enum';
 import { OmitType } from '@nestjs/mapped-types';
+import { Tweet } from '../entities/tweet.entity';
 
 export class TweetDto {
   id: string;
@@ -48,3 +49,8 @@ export class TweetDto {
 }
 
 export class CreateTweetDto extends OmitType(TweetDto, ['id', 'createdAt']) {}
+
+export class PaginatedTweet {
+  nodes: Tweet[];
+  hasNextPage: boolean;
+}

@@ -22,13 +22,9 @@ export class UserService {
     return existed_counts === ids.length;
   }
 
-  public async checkUserExistence(
-    id: string,
-    relations?: FindOptionsRelations<Tweet>,
-  ): Promise<void> {
+  public async checkUserExistence(id: string): Promise<void> {
     const user: User = await this.userRepository.findOne({
       where: { id },
-      relations,
     });
 
     if (!user) {

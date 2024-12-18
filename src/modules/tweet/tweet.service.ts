@@ -1,16 +1,20 @@
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { FindOptionsRelations, In, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
-import { CreateTweetDto, TweetDto } from './dto/tweet.dto';
+import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
 import { User } from '../user/entities/user.entity';
 import { PermissionService } from '../permission/permission.service';
+import { UserService } from '../user/user.service';
+import { GroupService } from '../group/group.service';
+import { PermissionType } from '../permission/enums/permission.enum';
 
 @Injectable()
 export class TweetService {
@@ -21,6 +25,8 @@ export class TweetService {
     private readonly userRepository: Repository<User>,
     @Inject(forwardRef(() => PermissionService))
     private readonly permissionService: PermissionService,
+    private readonly userService: UserService,
+    private readonly groupService: GroupService,
   ) {}
 
   private async getParentTweet(createTweetDto: CreateTweetDto): Promise<Tweet> {
@@ -93,5 +99,76 @@ export class TweetService {
 
   public async canEditTweet(userId: string, tweetId: string): Promise<boolean> {
     return await this.permissionService.canEditTweet(userId, tweetId);
+  }
+
+  async paginateTweets(
+    userId: string,
+    limit: number,
+    page: number,
+  ): Promise<PaginatedTweet> {
+    if (limit <= 0) throw new BadRequestException(Errors.Tweet.NegativeLimit);
+    if (page <= 0) throw new BadRequestException(Errors.Tweet.NegativePage);
+    await this.userService.checkUserExistence(userId);
+
+    const offset: number = (page - 1) * limit;
+    const userGroupIds: string[] =
+      await this.groupService.getAllGroupIdsForUser(userId);
+
+    const query = `
+    WITH RECURSIVE tweet_hierarchy AS (
+      -- Base case: Start with tweets
+      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
+      FROM tweets t
+      WHERE t."inheritViewPermissions" = false
+
+      UNION ALL
+
+      -- Recursive case: Find parent tweets
+      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
+      FROM tweets t
+      INNER JOIN tweet_hierarchy th ON th.id = t."parentTweetId"
+    )
+    SELECT DISTINCT t.*
+    FROM tweets t
+    LEFT JOIN permissions p ON p."tweetId" = t.id
+    WHERE (
+      -- Explicit permissions
+      (p."permittedId" = $1 AND p."permissionType" = $4)
+      OR (p."permittedId" = ANY($2) AND p."permissionType" = $4)
+      OR (
+        -- Inherited permissions
+        t."inheritViewPermissions" = true
+        AND EXISTS (
+          SELECT 1
+          FROM tweet_hierarchy th
+          INNER JOIN permissions parent_p ON parent_p."tweetId" = th."parentTweetId"
+          WHERE parent_p."permissionType" = $4
+            AND (parent_p."permittedId" = $1 OR parent_p."permittedId" = ANY($2))
+        )
+      )
+      OR (
+        -- Root tweets with inheritViewPermissions = true
+        t."inheritViewPermissions" = true
+        AND t."parentTweetId" IS NULL
+      )
+    )
+    ORDER BY t."createdAt" DESC
+    LIMIT $3 OFFSET $5;
+    `;
+
+    const tweets = await this.tweetRepository.query(query, [
+      userId, // $1: User ID
+      userGroupIds, // $2: Group IDs
+      limit + 1, // $3: Limit
+      PermissionType.View, // $4: Permission type
+      offset, // $5: Offset
+    ]);
+
+    const hasNextPage = tweets.length > limit;
+    const nodes = hasNextPage ? tweets.slice(0, limit) : tweets;
+    return {
+      nodes,
+      hasNextPage,
+    };
   }
 }

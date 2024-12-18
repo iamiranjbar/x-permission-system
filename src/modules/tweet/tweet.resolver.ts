@@ -1,6 +1,6 @@
 import { Resolver, Mutation, Args, Query } from '@nestjs/graphql';
 import { TweetService } from './tweet.service';
-import { CreateTweetDto, TweetDto } from './dto/tweet.dto';
+import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
 
 @Resolver(() => TweetDto)
 export class TweetResolver {
@@ -19,5 +19,14 @@ export class TweetResolver {
     @Args('tweetId') tweetId: string,
   ): Promise<boolean> {
     return await this.tweetService.canEditTweet(userId, tweetId);
+  }
+
+  @Query(() => PaginatedTweet)
+  async paginateTweets(
+    @Args('userId') userId: string,
+    @Args('limit') limit: number,
+    @Args('page') page: number,
+  ): Promise<PaginatedTweet> {
+    return this.tweetService.paginateTweets(userId, limit, page);
   }
 }

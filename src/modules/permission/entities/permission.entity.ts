@@ -24,7 +24,10 @@ export class Permission {
   })
   permittedEntityType: PermittedType;
 
-  @ManyToOne(() => Tweet, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Tweet, (tweet) => tweet.permissions, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'tweetId' })
   tweet: Tweet;
 

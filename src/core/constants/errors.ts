@@ -11,5 +11,7 @@ export const Errors = {
     ParentTweetNotFound: 'Parent tweet not found',
     AuthorNotFound: 'Author of tweet not found',
     NotFound: 'Tweet not found',
+    NegativeLimit: 'Limit must be greater than 0',
+    NegativePage: 'Page must be greater than 0',
   },
 };
