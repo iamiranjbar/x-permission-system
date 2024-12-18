@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { Tweet } from '../tweet/entities/tweet.entity';
 import { Errors } from '../../core/constants/errors';
 
 @Injectable()

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, In, Repository } from 'typeorm';
+import { FindOptionsRelations, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
