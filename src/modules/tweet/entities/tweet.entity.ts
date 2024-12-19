@@ -6,12 +6,14 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { TweetCategory } from '../enums/tweet-category.enum';
 import { Permission } from '../../permission/entities/permission.entity';
 
 @Entity('tweets')
+@Index(['parentTweetId', 'inheritViewPermissions', 'inheritEditPermissions'])
 export class Tweet {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,6 +34,9 @@ export class Tweet {
   @ManyToOne(() => Tweet, { nullable: true })
   @JoinColumn({ name: 'parentTweetId' })
   parentTweet?: Tweet;
+
+  @Column('uuid', { nullable: true })
+  parentTweetId: string;
 
   @Column({
     type: 'enum',
