@@ -188,7 +188,7 @@ describe('TweetService', () => {
       jest.spyOn(tweetRepository, 'query').mockResolvedValue(tweets);
 
       const result = await tweetService.paginateTweets(userId, limit, page);
-      console.log(result);
+
       expect(userService.checkUserExistence).toHaveBeenCalledWith(userId);
       expect(groupService.getAllGroupIdsForUser).toHaveBeenCalledWith(userId);
       expect(tweetRepository.query).toHaveBeenCalledWith(

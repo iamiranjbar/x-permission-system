@@ -93,10 +93,13 @@ describe('PermissionService', () => {
 
   describe('canEditTweet', () => {
     it('should return true if the user has explicit edit permission', async () => {
+      jest.spyOn(tweetService, 'getTweetById').mockResolvedValue({
+        id: 'tweet1',
+        inheritEditPermissions: false,
+      } as Tweet);
       jest
-        .spyOn(tweetService, 'getTweetById')
-        .mockResolvedValue({ id: 'tweet1', inheritEditPermissions: false } as Tweet);
-      jest.spyOn(userService, 'checkUserExistence').mockResolvedValue(undefined);
+        .spyOn(userService, 'checkUserExistence')
+        .mockResolvedValue(undefined);
       jest.spyOn(permissionRepository, 'findOne').mockResolvedValue({
         id: 'permission1',
         permittedId: 'user1',
@@ -117,10 +120,13 @@ describe('PermissionService', () => {
     });
 
     it('should return false if the user has no explicit or group edit permission', async () => {
+      jest.spyOn(tweetService, 'getTweetById').mockResolvedValue({
+        id: 'tweet1',
+        inheritEditPermissions: false,
+      } as Tweet);
       jest
-        .spyOn(tweetService, 'getTweetById')
-        .mockResolvedValue({ id: 'tweet1', inheritEditPermissions: false } as Tweet);
-      jest.spyOn(userService, 'checkUserExistence').mockResolvedValue(undefined);
+        .spyOn(userService, 'checkUserExistence')
+        .mockResolvedValue(undefined);
 
       jest.spyOn(permissionRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(groupService, 'getAllGroupIdsForUser').mockResolvedValue([]);
@@ -143,21 +149,27 @@ describe('PermissionService', () => {
         parentTweet,
       } as Tweet;
 
-      jest.spyOn(tweetService, 'getTweetById').mockImplementation(async (tweetId) => {
-        if (tweetId === 'tweet1') return childTweet;
-        if (tweetId === 'tweet2') return parentTweet;
-        throw new NotFoundException();
-      });
+      jest
+        .spyOn(tweetService, 'getTweetById')
+        .mockImplementation(async (tweetId) => {
+          if (tweetId === 'tweet1') return childTweet;
+          if (tweetId === 'tweet2') return parentTweet;
+          throw new NotFoundException();
+        });
 
-      jest.spyOn(userService, 'checkUserExistence').mockResolvedValue(undefined);
-      jest.spyOn(permissionRepository, 'findOne').mockImplementation(async (args) => {
+      jest
+        .spyOn(userService, 'checkUserExistence')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(permissionRepository, 'findOne')
+        .mockImplementation(async () => {
           return {
             id: 'permission1',
             permittedId: 'user1',
             permissionType: PermissionType.Edit,
             tweet: parentTweet,
           } as Permission;
-      });
+        });
 
       const result = await service.canEditTweet('user1', 'tweet1');
 
@@ -185,7 +197,9 @@ describe('PermissionService', () => {
     it('should update permissions and commit transaction', async () => {
       const tweet = { id: 'tweet1' } as Tweet;
       jest.spyOn(tweetService, 'getTweetById').mockResolvedValue(tweet);
-      jest.spyOn(tweetService, 'updateTweetInheritance').mockResolvedValue(undefined);
+      jest
+        .spyOn(tweetService, 'updateTweetInheritance')
+        .mockResolvedValue(undefined);
       jest.spyOn(groupService, 'checkIdsValidity').mockResolvedValue(undefined);
       queryRunnerMock.manager.save.mockResolvedValue(undefined);
 
@@ -206,7 +220,9 @@ describe('PermissionService', () => {
     });
 
     it('should rollback transaction on error', async () => {
-      jest.spyOn(tweetService, 'getTweetById').mockRejectedValue(new Error('Error'));
+      jest
+        .spyOn(tweetService, 'getTweetById')
+        .mockRejectedValue(new Error('Error'));
 
       await expect(
         service.updateTweetPermissions('tweet1', {
