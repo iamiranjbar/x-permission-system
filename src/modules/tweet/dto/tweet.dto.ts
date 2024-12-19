@@ -41,7 +41,7 @@ export class TweetDto {
 
   @IsBoolean()
   @IsOptional()
-  inheritViewPermissions: boolean;
+  inheritViewPermissions?: boolean;
 
   @IsBoolean()
   @IsOptional()
