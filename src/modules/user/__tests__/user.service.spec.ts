@@ -76,7 +76,9 @@ describe('UserService', () => {
       const id = 'user1';
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(userService.checkUserExistence(id)).rejects.toThrow(NotFoundException);
+      await expect(userService.checkUserExistence(id)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { id },
       });

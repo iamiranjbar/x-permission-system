@@ -64,7 +64,9 @@ describe('TweetService', () => {
     tweetService = module.get<TweetService>(TweetService);
     tweetRepository = module.get<Repository<Tweet>>(getRepositoryToken(Tweet));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    permissionService = module.get(PermissionService) as jest.Mocked<PermissionService>;
+    permissionService = module.get(
+      PermissionService,
+    ) as jest.Mocked<PermissionService>;
     userService = module.get(UserService) as jest.Mocked<UserService>;
     groupService = module.get(GroupService) as jest.Mocked<GroupService>;
     dataSource = module.get(DataSource) as jest.Mocked<DataSource>;
@@ -90,12 +92,16 @@ describe('TweetService', () => {
 
   describe('createTweet', () => {
     it('should successfully create a tweet', async () => {
-      const createTweetDto = { authorId: 'user1', parentTweetId: 'tweet1', content: 'Hello' };
+      const createTweetDto = {
+        authorId: 'user1',
+        parentTweetId: 'tweet1',
+        content: 'Hello',
+      };
       const author = { id: 'user1' } as User;
       const parentTweet = { id: 'tweet1' } as Tweet;
       const savedTweet = { id: 'tweet2', content: 'Hello' } as Tweet;
 
-      jest.spyOn(tweetRepository, 'findOne').mockResolvedValueOnce(parentTweet)
+      jest.spyOn(tweetRepository, 'findOne').mockResolvedValueOnce(parentTweet);
       jest.spyOn(userRepository, 'findOne').mockResolvedValueOnce(author);
 
       (queryRunner.manager.create as jest.Mock).mockReturnValue(savedTweet);
@@ -127,7 +133,6 @@ describe('TweetService', () => {
       });
     });
 
-
     it('should rollback transaction if an error occurs', async () => {
       const createTweetDto = { authorId: 'user1', content: 'Hello' };
 
@@ -135,7 +140,9 @@ describe('TweetService', () => {
         throw new Error('Parent tweet error');
       });
 
-      await expect(tweetService.createTweet(createTweetDto)).rejects.toThrow('Parent tweet error');
+      await expect(tweetService.createTweet(createTweetDto)).rejects.toThrow(
+        'Parent tweet error',
+      );
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(queryRunner.release).toHaveBeenCalled();
@@ -160,7 +167,9 @@ describe('TweetService', () => {
     it('should throw NotFoundException if tweet does not exist', async () => {
       jest.spyOn(tweetRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(tweetService.getTweetById('tweet1')).rejects.toThrow(NotFoundException);
+      await expect(tweetService.getTweetById('tweet1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
   describe('paginateTweets', () => {
@@ -179,16 +188,13 @@ describe('TweetService', () => {
       jest.spyOn(tweetRepository, 'query').mockResolvedValue(tweets);
 
       const result = await tweetService.paginateTweets(userId, limit, page);
-      console.log(result)
+      console.log(result);
       expect(userService.checkUserExistence).toHaveBeenCalledWith(userId);
       expect(groupService.getAllGroupIdsForUser).toHaveBeenCalledWith(userId);
-      expect(tweetRepository.query).toHaveBeenCalledWith(expect.stringContaining('WITH RECURSIVE'), [
-        userId,
-        groupIds,
-        limit + 1,
-        PermissionType.View,
-        0,
-      ]);
+      expect(tweetRepository.query).toHaveBeenCalledWith(
+        expect.stringContaining('WITH RECURSIVE'),
+        [userId, groupIds, limit + 1, PermissionType.View, 0],
+      );
       expect(result).toEqual({
         nodes: tweets,
         hasNextPage: false,
@@ -215,11 +221,15 @@ describe('TweetService', () => {
     });
 
     it('should throw BadRequestException for negative limit', async () => {
-      await expect(tweetService.paginateTweets('user1', -1, 1)).rejects.toThrow(BadRequestException);
+      await expect(tweetService.paginateTweets('user1', -1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for negative page', async () => {
-      await expect(tweetService.paginateTweets('user1', 10, -1)).rejects.toThrow(BadRequestException);
+      await expect(
+        tweetService.paginateTweets('user1', 10, -1),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should check user existence', async () => {
@@ -236,5 +246,4 @@ describe('TweetService', () => {
       expect(userService.checkUserExistence).toHaveBeenCalledWith(userId);
     });
   });
-
 });
