@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsRelations, Repository } from 'typeorm';
+import { DataSource, FindOptionsRelations, QueryRunner, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
@@ -110,10 +110,11 @@ export class TweetService {
     tweet: Tweet,
     inheritViewPermissions: boolean,
     inheritEditPermissions: boolean,
-  ): Promise<Tweet> {
+    queryRunner: QueryRunner,
+  ): Promise<void> {
     tweet.inheritViewPermissions = inheritViewPermissions;
     tweet.inheritEditPermissions = inheritEditPermissions;
-    return this.tweetRepository.save(tweet);
+    await queryRunner.manager.save(Tweet, tweet);
   }
 
   public async canEditTweet(userId: string, tweetId: string): Promise<boolean> {

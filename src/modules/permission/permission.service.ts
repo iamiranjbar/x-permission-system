@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, QueryRunner, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 import { Tweet } from '../tweet/entities/tweet.entity';
 import { PermissionType, PermittedType } from './enums/permission.enum';
@@ -19,43 +19,62 @@ export class PermissionService {
     private readonly groupService: GroupService,
     @Inject(forwardRef(() => TweetService))
     private readonly tweetService: TweetService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async updateTweetPermissions(
     tweetId: string,
     updateTweetPermissionsDto: UpdateTweetPermissionsDto,
   ): Promise<boolean> {
-    const tweet: Tweet = await this.tweetService.getTweetById(tweetId);
-    await this.tweetService.updateTweetInheritance(
-      tweet,
-      updateTweetPermissionsDto.inheritViewPermissions,
-      updateTweetPermissionsDto.inheritEditPermissions,
-    );
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    if (!updateTweetPermissionsDto.inheritViewPermissions) {
-      await this.updatePermissions(
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const tweet: Tweet = await this.tweetService.getTweetById(tweetId);
+      await this.tweetService.updateTweetInheritance(
         tweet,
-        updateTweetPermissionsDto.userViewPermissions,
-        updateTweetPermissionsDto.groupViewPermissions,
-        PermissionType.View,
+        updateTweetPermissionsDto.inheritViewPermissions,
+        updateTweetPermissionsDto.inheritEditPermissions,
+        queryRunner,
       );
+
+      if (!updateTweetPermissionsDto.inheritViewPermissions) {
+        await this.updatePermissions(
+          tweet,
+          updateTweetPermissionsDto.userViewPermissions,
+          updateTweetPermissionsDto.groupViewPermissions,
+          PermissionType.View,
+          queryRunner,
+        );
+      }
+      if (!updateTweetPermissionsDto.inheritEditPermissions) {
+        await this.updatePermissions(
+          tweet,
+          updateTweetPermissionsDto.userEditPermissions,
+          updateTweetPermissionsDto.groupEditPermissions,
+          PermissionType.Edit,
+          queryRunner,
+        );
+      }
+      await queryRunner.commitTransaction();
+      return true;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    if (!updateTweetPermissionsDto.inheritEditPermissions) {
-      await this.updatePermissions(
-        tweet,
-        updateTweetPermissionsDto.userEditPermissions,
-        updateTweetPermissionsDto.groupEditPermissions,
-        PermissionType.Edit,
-      );
-    }
-    return true;
   }
 
   private async clearExistingPermissions(
     tweet: Tweet,
     permissionType: PermissionType,
+    queryRunner: QueryRunner,
   ): Promise<void> {
-    await this.permissionRepository.delete({
+    await queryRunner.manager.delete(Permission, {
       tweet: { id: tweet.id },
       permissionType: permissionType,
     });
@@ -66,9 +85,10 @@ export class PermissionService {
     permittedType: PermittedType,
     tweet: Tweet,
     permissionType: PermissionType,
+    queryRunner: QueryRunner,
   ): Promise<Permission[]> {
     return permittedIds.map((id) =>
-      this.permissionRepository.create({
+      queryRunner.manager.create(Permission, {
         permittedId: id,
         permittedEntityType: permittedType,
         tweet,
@@ -82,26 +102,29 @@ export class PermissionService {
     permittedUserIds: string[],
     permittedGroupIds: string[],
     permissionType: PermissionType,
+    queryRunner: QueryRunner,
   ): Promise<void> {
     await this.groupService.checkIdsValidity(
       permittedUserIds,
       permittedGroupIds,
     );
-    await this.clearExistingPermissions(tweet, permissionType);
+    await this.clearExistingPermissions(tweet, permissionType, queryRunner);
     const userPermissions: Permission[] = await this.createNewPermissions(
       permittedUserIds,
       PermittedType.User,
       tweet,
       permissionType,
+      queryRunner,
     );
     const groupPermissions: Permission[] = await this.createNewPermissions(
       permittedGroupIds,
       PermittedType.Group,
       tweet,
       permissionType,
+      queryRunner,
     );
     const permissions: Permission[] = [...userPermissions, ...groupPermissions];
-    await this.permissionRepository.save(permissions);
+    await queryRunner.manager.save(Permission, permissions);
   }
 
   public async addUserPermission(
