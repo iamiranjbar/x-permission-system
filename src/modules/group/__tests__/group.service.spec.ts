@@ -200,7 +200,6 @@ describe('GroupService', () => {
 
   describe('getAllGroupIdsForUser', () => {
     it('should return all group ids for a user', async () => {
-      // Mock the direct user groups
       jest
         .spyOn(membershipRepository, 'find')
         .mockResolvedValue([
@@ -208,15 +207,12 @@ describe('GroupService', () => {
           { group: { id: 'group2' } } as GroupMembership,
         ]);
 
-      // Mock the recursive call to getAllGroupIds
       const getAllGroupIdsSpy = jest
-        .spyOn(service, 'getAllGroupIds' as any) // Explicitly typecast private method access if needed
+        .spyOn(service, 'getAllGroupIds' as any)
         .mockResolvedValue(['group1', 'group2', 'group3']);
 
-      // Call the method under test
       const result = await service.getAllGroupIdsForUser('user1');
 
-      // Assertions
       expect(membershipRepository.find).toHaveBeenCalledWith({
         where: { memberId: 'user1' },
         relations: ['group'],
@@ -226,13 +222,9 @@ describe('GroupService', () => {
     });
 
     it('should return an empty list if the user belongs to no groups', async () => {
-      // Mock the direct user groups as empty
       jest.spyOn(membershipRepository, 'find').mockResolvedValue([]);
 
-      // Call the method under test
       const result = await service.getAllGroupIdsForUser('user1');
-
-      // Assertions
       expect(membershipRepository.find).toHaveBeenCalledWith({
         where: { memberId: 'user1' },
         relations: ['group'],
