@@ -1580,9 +1580,9 @@
     "@types/node" "*"
     form-data "^4.0.0"
 
-"@types/supertest@^6.0.0":
+"@types/supertest@^6.0.2":
   version "6.0.2"
-  resolved "https://registry.npmjs.org/@types/supertest/-/supertest-6.0.2.tgz"
+  resolved "https://registry.yarnpkg.com/@types/supertest/-/supertest-6.0.2.tgz#2af1c466456aaf82c7c6106c6b5cbd73a5e86588"
   integrity sha512-137ypx2lk/wTQbW6An6safu9hXmajAifU/s7szAHLN/FeIm5w7yR0Wkl9fdJMRSHwOn4HLAI0DaB2TOORuhPDg==
   dependencies:
     "@types/methods" "^1.1.4"
@@ -5609,7 +5609,7 @@ superagent@^9.0.1:
 
 supertest@^7.0.0:
   version "7.0.0"
-  resolved "https://registry.npmjs.org/supertest/-/supertest-7.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/supertest/-/supertest-7.0.0.tgz#cac53b3d6872a0b317980b2b0cfa820f09cd7634"
   integrity sha512-qlsr7fIC0lSddmA3tzojvzubYxvlGtzumcdHgPwbFWMISQwL22MhM2Y3LNt+6w9Yyx7559VW5ab70dgphm8qQA==
   dependencies:
     methods "^1.1.2"
