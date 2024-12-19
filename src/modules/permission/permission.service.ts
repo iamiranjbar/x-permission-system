@@ -110,7 +110,7 @@ export class PermissionService {
     permissionType: PermissionType,
     queryRunner: QueryRunner,
   ): Promise<void> {
-    const userPermission: Permission = queryRunner.manager.create(Permission,{
+    const userPermission: Permission = queryRunner.manager.create(Permission, {
       permittedId: user.id,
       permittedEntityType: PermittedType.User,
       tweet,

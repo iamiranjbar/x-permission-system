@@ -3,8 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
 import { GroupMembership } from './entities/group-membership.entity';
 import { CreateGroupDto, GroupDto } from './dto/group.dto';
@@ -20,6 +20,8 @@ export class GroupService {
     @InjectRepository(GroupMembership)
     private readonly membershipRepository: Repository<GroupMembership>,
     private readonly userService: UserService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   public async checkIdsValidity(
@@ -36,16 +38,17 @@ export class GroupService {
     savedGroup: Group,
     userIds: string[],
     groupIds: string[],
+    queryRunner: QueryRunner,
   ): Promise<void> {
     const userMemberships: GroupMembership[] = userIds?.map((userId) =>
-      this.membershipRepository.create({
+      queryRunner.manager.create(GroupMembership, {
         memberId: userId,
         memberType: MemberType.User,
         group: savedGroup,
       }),
     );
     const groupMemberships: GroupMembership[] = groupIds?.map((groupId) =>
-      this.membershipRepository.create({
+      queryRunner.manager.create(GroupMembership, {
         memberId: groupId,
         memberType: MemberType.Group,
         group: savedGroup,
@@ -54,31 +57,49 @@ export class GroupService {
     const memberships: GroupMembership[] = [];
     if (userMemberships?.length > 0) memberships.push(...userMemberships);
     if (groupMemberships?.length > 0) memberships.push(...groupMemberships);
-    await this.membershipRepository.save(memberships);
+    await queryRunner.manager.save(GroupMembership, memberships);
   }
 
   public async createGroup(createGroupDto: CreateGroupDto): Promise<GroupDto> {
-    const { userIds, groupIds } = createGroupDto;
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    if (
-      (!userIds || userIds.length === 0) &&
-      (!groupIds || groupIds.length === 0)
-    ) {
-      throw new BadRequestException(Errors.Group.EmptyMembersList);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { userIds, groupIds } = createGroupDto;
+
+      if (
+        (!userIds || userIds.length === 0) &&
+        (!groupIds || groupIds.length === 0)
+      ) {
+        throw new BadRequestException(Errors.Group.EmptyMembersList);
+      }
+      await this.checkIdsValidity(userIds, groupIds);
+
+      const group = queryRunner.manager.create(Group, {
+        name: `group-${Date.now()}`,
+      });
+      const savedGroup = await queryRunner.manager.save(group);
+
+      await this.createGroupMemberships(
+        savedGroup,
+        userIds,
+        groupIds,
+        queryRunner,
+      );
+      await queryRunner.commitTransaction();
+
+      const response: GroupDto = { ...savedGroup };
+      if (userIds?.length > 0) response['userIds'] = userIds;
+      if (groupIds?.length > 0) response['groupIds'] = groupIds;
+      return response;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    await this.checkIdsValidity(userIds, groupIds);
-
-    const group = this.groupRepository.create({
-      name: `group-${Date.now()}`,
-    });
-    const savedGroup = await this.groupRepository.save(group);
-
-    await this.createGroupMemberships(savedGroup, userIds, groupIds);
-
-    const response: GroupDto = { ...savedGroup };
-    if (userIds?.length > 0) response['userIds'] = userIds;
-    if (groupIds?.length > 0) response['groupIds'] = groupIds;
-    return response;
   }
 
   public async doAllIdsExists(ids: string[]): Promise<boolean> {
