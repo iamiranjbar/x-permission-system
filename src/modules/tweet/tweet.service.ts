@@ -5,8 +5,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, FindOptionsRelations, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
@@ -27,6 +27,8 @@ export class TweetService {
     private readonly permissionService: PermissionService,
     private readonly userService: UserService,
     private readonly groupService: GroupService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   private async getParentTweet(createTweetDto: CreateTweetDto): Promise<Tweet> {
@@ -54,22 +56,39 @@ export class TweetService {
   }
 
   public async createTweet(createTweetDto: CreateTweetDto): Promise<TweetDto> {
-    const parentTweet: Tweet = await this.getParentTweet(createTweetDto);
-    const author: User = await this.getTweetAuthor(createTweetDto);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const tweet: Tweet = this.tweetRepository.create({
-      ...createTweetDto,
-      author: author,
-      parentTweet: parentTweet,
-    });
-    const savedTweet = await this.tweetRepository.save(tweet);
+    try {
+      const parentTweet: Tweet = await this.getParentTweet(createTweetDto);
+      const author: User = await this.getTweetAuthor(createTweetDto);
 
-    await this.permissionService.addPermissionForAuthor(savedTweet, author);
-    return {
-      ...savedTweet,
-      authorId: author.id,
-      parentTweetId: parentTweet?.id,
-    };
+      const tweet: Tweet = queryRunner.manager.create(Tweet, {
+        ...createTweetDto,
+        author: author,
+        parentTweet: parentTweet,
+      });
+      const savedTweet: Tweet = await queryRunner.manager.save(tweet);
+
+      await this.permissionService.addPermissionForAuthor(
+        savedTweet,
+        author,
+        queryRunner,
+      );
+      await queryRunner.commitTransaction();
+
+      return {
+        ...savedTweet,
+        authorId: author.id,
+        parentTweetId: parentTweet?.id,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   public async getTweetById(

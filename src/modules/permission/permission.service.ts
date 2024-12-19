@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 import { Tweet } from '../tweet/entities/tweet.entity';
 import { PermissionType, PermittedType } from './enums/permission.enum';
@@ -108,22 +108,34 @@ export class PermissionService {
     tweet: Tweet,
     user: User,
     permissionType: PermissionType,
+    queryRunner: QueryRunner,
   ): Promise<void> {
-    const userPermission: Permission = this.permissionRepository.create({
+    const userPermission: Permission = queryRunner.manager.create(Permission,{
       permittedId: user.id,
       permittedEntityType: PermittedType.User,
       tweet,
       permissionType,
     });
-    await this.permissionRepository.save(userPermission);
+    await queryRunner.manager.save(userPermission);
   }
 
   public async addPermissionForAuthor(
     tweet: Tweet,
     author: User,
+    queryRunner: QueryRunner,
   ): Promise<void> {
-    await this.addUserPermission(tweet, author, PermissionType.View);
-    await this.addUserPermission(tweet, author, PermissionType.Edit);
+    await this.addUserPermission(
+      tweet,
+      author,
+      PermissionType.View,
+      queryRunner,
+    );
+    await this.addUserPermission(
+      tweet,
+      author,
+      PermissionType.Edit,
+      queryRunner,
+    );
   }
 
   private async hasInheritedEditPermission(
