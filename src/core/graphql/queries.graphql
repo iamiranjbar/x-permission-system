@@ -1,0 +1,13 @@
+type Query {
+    """
+    Paginates over tweets for the given user ID
+    This API only retrieves those tweets that are viewable for the given user ID
+    Tweets order should be based on "createdAt" field. Latest tweets should be on top of the list.
+    """
+    paginateTweets(userId: String!, limit: Int!, page: Int!, filters: FilterTweet): PaginatedTweet!
+
+    """
+    Returns true if the given user ID can edit the given tweet ID
+    """
+    canEditTweet(userId: String!, tweetId: String!): Boolean!
+}
