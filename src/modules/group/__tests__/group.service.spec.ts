@@ -7,6 +7,7 @@ import { GroupMembership } from '../entities/group-membership.entity';
 import { UserService } from '../../user/user.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Errors } from '../../../core/constants/errors';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 describe('GroupService', () => {
   let service: GroupService;
@@ -15,6 +16,7 @@ describe('GroupService', () => {
   let userService: UserService;
   let dataSourceMock: DataSource;
   let queryRunnerMock: any;
+  let cacheManager: Partial<Record<keyof Cache, jest.Mock>>;
 
   beforeEach(async () => {
     queryRunnerMock = {
@@ -32,6 +34,12 @@ describe('GroupService', () => {
     dataSourceMock = {
       createQueryRunner: jest.fn().mockReturnValue(queryRunnerMock),
     } as unknown as DataSource;
+
+    const mockCacheManager: Partial<Record<keyof Cache, jest.Mock>> = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -54,6 +62,10 @@ describe('GroupService', () => {
           provide: DataSource,
           useValue: dataSourceMock,
         },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
       ],
     }).compile();
 
@@ -63,6 +75,7 @@ describe('GroupService', () => {
       getRepositoryToken(GroupMembership),
     );
     userService = module.get<UserService>(UserService);
+    cacheManager = module.get(CACHE_MANAGER);
   });
 
   it('should be defined', () => {
@@ -71,6 +84,7 @@ describe('GroupService', () => {
     expect(membershipRepository).toBeDefined();
     expect(userService).toBeDefined();
     expect(dataSourceMock).toBeDefined();
+    expect(cacheManager).toBeDefined();
   });
 
   describe('checkIdsValidity', () => {
@@ -109,7 +123,7 @@ describe('GroupService', () => {
   describe('createGroup', () => {
     it('should create a group with valid userIds and groupIds', async () => {
       jest.spyOn(service, 'checkIdsValidity').mockResolvedValue(undefined);
-
+      jest.spyOn(membershipRepository, 'find').mockResolvedValue([]);
       queryRunnerMock.manager.create.mockReturnValueOnce({
         id: 'group-id',
         name: 'group-name',
@@ -230,6 +244,30 @@ describe('GroupService', () => {
         relations: ['group'],
       });
       expect(result).toEqual([]);
+    });
+    it('should return cached group IDs if available', async () => {
+      const cachedGroupIds = ['group1', 'group2'];
+      cacheManager.get.mockResolvedValue(cachedGroupIds);
+
+      const result = await service.getAllGroupIdsForUser('user1');
+
+      expect(cacheManager.get).toHaveBeenCalledWith('user:user1:groupIds');
+      expect(result).toEqual(cachedGroupIds);
+    });
+
+    it('should fetch group IDs from the database if cache is missing', async () => {
+      cacheManager.get.mockResolvedValue(null);
+      jest
+        .spyOn(membershipRepository, 'find')
+        .mockResolvedValue([
+          { group: { id: 'group1' } },
+          { group: { id: 'group2' } },
+        ] as any);
+      const result = await service.getAllGroupIdsForUser('user1');
+
+      expect(cacheManager.get).toHaveBeenCalledWith('user:user1:groupIds');
+      expect(membershipRepository.find).toHaveBeenCalled();
+      expect(result).toEqual(['group1', 'group2']);
     });
   });
 });

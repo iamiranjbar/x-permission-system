@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { CreateGroupDto, GroupDto } from './dto/group.dto';
 import { MemberType } from './enums/member_type.enum';
 import { Errors } from '../../core/constants/errors';
 import { UserService } from '../user/user.service';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class GroupService {
@@ -22,6 +24,8 @@ export class GroupService {
     private readonly userService: UserService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
 
   public async checkIdsValidity(
@@ -90,6 +94,13 @@ export class GroupService {
       );
       await queryRunner.commitTransaction();
 
+      // Invalidate caches for affected users and groups
+      const affected = await this.getAllAffectedUsersAndGroups([savedGroup.id]);
+      await this.invalidateCachesForUsersAndGroups(
+        affected.affectedUserIds,
+        affected.affectedGroupIds,
+      );
+
       const response: GroupDto = { ...savedGroup };
       if (userIds?.length > 0) response['userIds'] = userIds;
       if (groupIds?.length > 0) response['groupIds'] = groupIds;
@@ -113,15 +124,26 @@ export class GroupService {
   }
 
   public async getAllGroupIdsForUser(userId: string): Promise<string[]> {
+    const cacheKey: string = `user:${userId}:groupIds`;
+    const cachedGroupIds: string[] =
+      await this.cacheManager.get<string[]>(cacheKey);
+    if (cachedGroupIds) {
+      console.log('Cache hit for group IDs');
+      return cachedGroupIds;
+    }
+
+    console.log('Cache miss for group IDs. Fetching from database...');
     const directUserGroups = await this.membershipRepository.find({
       where: { memberId: userId },
       relations: ['group'],
     });
-    const directGroupIds = directUserGroups.map(
-      (membership) => membership.group.id,
+    const directGroupIds: string[] = directUserGroups.map(
+      (membership: GroupMembership) => membership.group.id,
     );
 
-    return await this.getAllGroupIds(directGroupIds);
+    const allGroupIds: string[] = await this.getAllGroupIds(directGroupIds);
+    await this.cacheManager.set(cacheKey, allGroupIds, { ttl: 600 });
+    return allGroupIds;
   }
 
   private async getAllGroupIds(groupIds: string[]): Promise<string[]> {
@@ -135,18 +157,72 @@ export class GroupService {
       }
       visited.add(currentGroupId);
 
-      // Find parent groups for the current group
-      const parentGroups: GroupMembership[] =
-        await this.membershipRepository.find({
-          where: { memberId: currentGroupId },
-          relations: ['group'],
-        });
-
-      const parentGroupIds: string[] = parentGroups.map(
-        (membership) => membership.group.id,
-      );
+      const cacheKey: string = `group:${currentGroupId}:parentGroupIds`;
+      let parentGroupIds: string[] =
+        await this.cacheManager.get<string[]>(cacheKey);
+      if (parentGroupIds) {
+        console.log('Cache hit for parent group IDs');
+      } else {
+        console.log(
+          'Cache miss for group IDs. Find parent groups for the current group from database...',
+        );
+        const parentGroups: GroupMembership[] =
+          await this.membershipRepository.find({
+            where: { memberId: currentGroupId },
+            relations: ['group'],
+          });
+        parentGroupIds = parentGroups.map((membership) => membership.group.id);
+        await this.cacheManager.set(cacheKey, parentGroupIds, { ttl: 600 });
+      }
       queue.push(...parentGroupIds);
     }
     return Array.from(visited);
+  }
+
+  private async getAllAffectedUsersAndGroups(groupIds: string[]): Promise<{
+    affectedUserIds: string[];
+    affectedGroupIds: string[];
+  }> {
+    const visitedGroups = new Set<string>();
+    const affectedUserIds = new Set<string>();
+    const affectedGroupIds = new Set<string>(groupIds);
+    const queue = [...groupIds];
+
+    while (queue.length > 0) {
+      const currentGroupId = queue.shift();
+      if (visitedGroups.has(currentGroupId)) continue;
+
+      visitedGroups.add(currentGroupId);
+
+      const memberships = await this.membershipRepository.find({
+        where: { groupId: currentGroupId },
+      });
+
+      memberships.forEach((membership) => {
+        if (membership.memberType === MemberType.User) {
+          affectedUserIds.add(membership.memberId);
+        } else if (membership.memberType === MemberType.Group) {
+          affectedGroupIds.add(membership.memberId);
+          queue.push(membership.memberId);
+        }
+      });
+    }
+
+    return {
+      affectedUserIds: Array.from(affectedUserIds),
+      affectedGroupIds: Array.from(affectedGroupIds),
+    };
+  }
+
+  private async invalidateCachesForUsersAndGroups(
+    userIds: string[],
+    groupIds: string[],
+  ): Promise<void> {
+    for (const userId of userIds) {
+      await this.cacheManager.del(`user:${userId}:groupIds`);
+    }
+    for (const groupId of groupIds) {
+      await this.cacheManager.del(`group:${groupId}:parentGroupIds`);
+    }
   }
 }
