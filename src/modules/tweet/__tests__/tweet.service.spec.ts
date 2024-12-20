@@ -286,7 +286,7 @@ describe('TweetService', () => {
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'permissions:tweet1:user1:edit',
         true,
-        { ttl: 600 },
+        600 * 1000,
       );
       expect(result).toBe(true);
     });

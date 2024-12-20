@@ -128,11 +128,11 @@ export class GroupService {
     const cachedGroupIds: string[] =
       await this.cacheManager.get<string[]>(cacheKey);
     if (cachedGroupIds) {
-      console.log('Cache hit for group IDs');
+      console.log(`Cache hit for for key: ${cacheKey}`);
       return cachedGroupIds;
     }
 
-    console.log('Cache miss for group IDs. Fetching from database...');
+    console.log(`Cache miss for for key: ${cacheKey}`);
     const directUserGroups = await this.membershipRepository.find({
       where: { memberId: userId },
       relations: ['group'],
@@ -142,7 +142,7 @@ export class GroupService {
     );
 
     const allGroupIds: string[] = await this.getAllGroupIds(directGroupIds);
-    await this.cacheManager.set(cacheKey, allGroupIds, { ttl: 600 });
+    await this.cacheManager.set(cacheKey, allGroupIds, 10 * 60 * 1000);
     return allGroupIds;
   }
 
@@ -161,18 +161,16 @@ export class GroupService {
       let parentGroupIds: string[] =
         await this.cacheManager.get<string[]>(cacheKey);
       if (parentGroupIds) {
-        console.log('Cache hit for parent group IDs');
+        console.log(`Cache hit for key: ${cacheKey}`);
       } else {
-        console.log(
-          'Cache miss for group IDs. Find parent groups for the current group from database...',
-        );
+        console.log(`Cache miss for key: ${cacheKey}`);
         const parentGroups: GroupMembership[] =
           await this.membershipRepository.find({
             where: { memberId: currentGroupId },
             relations: ['group'],
           });
         parentGroupIds = parentGroups.map((membership) => membership.group.id);
-        await this.cacheManager.set(cacheKey, parentGroupIds, { ttl: 600 });
+        await this.cacheManager.set(cacheKey, parentGroupIds, 600 * 1000);
       }
       queue.push(...parentGroupIds);
     }
@@ -220,9 +218,11 @@ export class GroupService {
   ): Promise<void> {
     for (const userId of userIds) {
       await this.cacheManager.del(`user:${userId}:groupIds`);
+      console.log(`Cache delete key: user:${userId}:groupIds`);
     }
     for (const groupId of groupIds) {
       await this.cacheManager.del(`group:${groupId}:parentGroupIds`);
+      console.log(`Cache delete key: user:${groupId}:parentGroupIds`);
     }
   }
 }

@@ -191,27 +191,9 @@ export class PermissionService {
           permittedId: userId,
         },
       });
-
       return !!userPermission;
     });
   }
-
-  // private async userHasGroupEditPermission(
-  //   userId: string,
-  //   tweetId: string,
-  // ): Promise<boolean> {
-  //   // Check if the user belongs to a group with edit permissions
-  //   const userGroupIds = await this.groupService.getAllGroupIdsForUser(userId);
-  //   const groupHasEditPermission = await this.permissionRepository.findOne({
-  //     where: {
-  //       tweet: { id: tweetId },
-  //       permissionType: PermissionType.Edit,
-  //       permittedId: In(userGroupIds),
-  //     },
-  //   });
-  //
-  //   return !!groupHasEditPermission;
-  // }
 
   private async userHasGroupEditPermission(
     userId: string,
@@ -228,7 +210,6 @@ export class PermissionService {
           permittedId: In(userGroupIds),
         },
       });
-
       return !!groupPermission;
     });
   }
@@ -242,11 +223,9 @@ export class PermissionService {
     if (tweet.inheritEditPermissions) {
       return await this.hasInheritedEditPermission(userId, tweet);
     }
-
     if (await this.userHasExplicitEditPermission(userId, tweetId)) {
       return true;
     }
-
     return await this.userHasGroupEditPermission(userId, tweetId);
   }
 
@@ -254,12 +233,13 @@ export class PermissionService {
     const keys = await this.cacheManager.store.keys(`permissions:${tweetId}:*`);
     for (const key of keys) {
       await this.cacheManager.del(key);
+      console.log(`Cache delete key: ${key}`);
     }
   }
 
   private async getCachedPermission(
     cacheKey: string,
-    fetchFn: () => Promise<boolean>,
+    fetchFunction: () => Promise<boolean>,
   ): Promise<boolean> {
     const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
 
@@ -269,8 +249,8 @@ export class PermissionService {
     }
 
     console.log(`Cache miss for key: ${cacheKey}`);
-    const result = await fetchFn();
-    await this.cacheManager.set(cacheKey, result, { ttl: 600 }); // Cache for 10 minutes
+    const result = await fetchFunction();
+    await this.cacheManager.set(cacheKey, result, 600 * 1000);
     return result;
   }
 }
