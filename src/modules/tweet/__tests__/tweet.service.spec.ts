@@ -259,4 +259,38 @@ describe('TweetService', () => {
       expect(userService.checkUserExistence).toHaveBeenCalledWith(userId);
     });
   });
+  describe('canEditTweet Cache', () => {
+    it('should return cached permission if present', async () => {
+      mockCacheManager.get.mockResolvedValue(true);
+
+      const result = await tweetService.canEditTweet('user1', 'tweet1');
+
+      expect(mockCacheManager.get).toHaveBeenCalledWith(
+        'permissions:tweet1:user1:edit',
+      );
+      expect(result).toBe(true);
+      expect(permissionService.canEditTweet).not.toHaveBeenCalled();
+    });
+
+    it('should fetch permission and cache it if not in cache', async () => {
+      mockCacheManager.get.mockResolvedValue(null);
+      permissionService.canEditTweet.mockResolvedValue(true);
+
+      const result = await tweetService.canEditTweet('user1', 'tweet1');
+
+      expect(mockCacheManager.get).toHaveBeenCalledWith(
+        'permissions:tweet1:user1:edit',
+      );
+      expect(permissionService.canEditTweet).toHaveBeenCalledWith(
+        'user1',
+        'tweet1',
+      );
+      expect(mockCacheManager.set).toHaveBeenCalledWith(
+        'permissions:tweet1:user1:edit',
+        true,
+        { ttl: 600 },
+      );
+      expect(result).toBe(true);
+    });
+  });
 });

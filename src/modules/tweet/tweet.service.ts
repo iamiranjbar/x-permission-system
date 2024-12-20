@@ -133,7 +133,10 @@ export class TweetService {
       return cachedPermission;
     }
     console.log('Cache miss for edit permission');
-    const canEdit: boolean = await this.permissionService.canEditTweet(userId, tweetId);
+    const canEdit: boolean = await this.permissionService.canEditTweet(
+      userId,
+      tweetId,
+    );
     await this.cacheManager.set(cacheKey, canEdit, { ttl: 600 });
     return canEdit;
   }
