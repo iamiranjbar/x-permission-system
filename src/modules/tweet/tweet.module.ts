@@ -6,6 +6,7 @@ import { TweetResolver } from './tweet.resolver';
 import { UserModule } from '../user/user.module';
 import { PermissionModule } from '../permission/permission.module';
 import { GroupModule } from '../group/group.module';
+import { RedisCacheModule } from '../../core/cache/cache.module';
 
 const TweetRepository = TypeOrmModule.forFeature([Tweet]);
 
@@ -15,6 +16,7 @@ const TweetRepository = TypeOrmModule.forFeature([Tweet]);
     UserModule,
     GroupModule,
     forwardRef(() => PermissionModule),
+    RedisCacheModule,
   ],
   providers: [TweetService, TweetResolver],
   exports: [TweetRepository, TweetService],

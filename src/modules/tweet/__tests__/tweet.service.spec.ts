@@ -10,6 +10,7 @@ import { Tweet } from '../entities/tweet.entity';
 import { User } from '../../user/entities/user.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PermissionType } from '../../permission/enums/permission.enum';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('TweetService', () => {
   let tweetService: TweetService;
@@ -20,6 +21,13 @@ describe('TweetService', () => {
   let groupService: jest.Mocked<GroupService>;
   let dataSource: jest.Mocked<DataSource>;
   let queryRunner: jest.Mocked<QueryRunner>;
+  let cacheManager: Partial<Record<keyof Cache, jest.Mock>>;
+
+  const mockCacheManager: Partial<Record<keyof Cache, jest.Mock>> = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -58,6 +66,10 @@ describe('TweetService', () => {
             createQueryRunner: jest.fn(),
           },
         },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
       ],
     }).compile();
 
@@ -84,6 +96,7 @@ describe('TweetService', () => {
     } as unknown as jest.Mocked<QueryRunner>;
 
     dataSource.createQueryRunner.mockReturnValue(queryRunner);
+    cacheManager = module.get(CACHE_MANAGER);
   });
 
   afterEach(() => {

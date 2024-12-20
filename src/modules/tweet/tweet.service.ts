@@ -20,6 +20,7 @@ import { PermissionService } from '../permission/permission.service';
 import { UserService } from '../user/user.service';
 import { GroupService } from '../group/group.service';
 import { PermissionType } from '../permission/enums/permission.enum';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TweetService {
@@ -34,6 +35,8 @@ export class TweetService {
     private readonly groupService: GroupService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
 
   private async getParentTweet(createTweetDto: CreateTweetDto): Promise<Tweet> {
@@ -123,7 +126,16 @@ export class TweetService {
   }
 
   public async canEditTweet(userId: string, tweetId: string): Promise<boolean> {
-    return await this.permissionService.canEditTweet(userId, tweetId);
+    const cacheKey = `permissions:${tweetId}:${userId}:edit`;
+    const cachedPermission = await this.cacheManager.get<boolean>(cacheKey);
+    if (cachedPermission) {
+      console.log('Cache hit for edit permission');
+      return cachedPermission;
+    }
+    console.log('Cache miss for edit permission');
+    const canEdit: boolean = await this.permissionService.canEditTweet(userId, tweetId);
+    await this.cacheManager.set(cacheKey, canEdit, { ttl: 600 });
+    return canEdit;
   }
 
   async paginateTweets(
