@@ -10,7 +10,7 @@ import { Tweet } from '../../tweet/entities/tweet.entity';
 import { User } from '../../user/entities/user.entity';
 import { PermissionType } from '../enums/permission.enum';
 import { NotFoundException } from '@nestjs/common';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('PermissionService', () => {
   let service: PermissionService;
@@ -20,7 +20,6 @@ describe('PermissionService', () => {
   let userService: UserService;
   let dataSourceMock: DataSource;
   let queryRunnerMock: any;
-  let cacheManager: Partial<Record<keyof Cache, jest.Mock>>;
 
   const mockCacheManager = {
     get: jest.fn(),
@@ -95,7 +94,6 @@ describe('PermissionService', () => {
     groupService = module.get<GroupService>(GroupService);
     tweetService = module.get<TweetService>(TweetService);
     userService = module.get<UserService>(UserService);
-    cacheManager = module.get(CACHE_MANAGER);
   });
 
   it('should be defined', () => {

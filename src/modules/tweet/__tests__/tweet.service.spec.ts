@@ -21,7 +21,6 @@ describe('TweetService', () => {
   let groupService: jest.Mocked<GroupService>;
   let dataSource: jest.Mocked<DataSource>;
   let queryRunner: jest.Mocked<QueryRunner>;
-  let cacheManager: Partial<Record<keyof Cache, jest.Mock>>;
 
   const mockCacheManager: Partial<Record<keyof Cache, jest.Mock>> = {
     get: jest.fn(),
@@ -96,7 +95,6 @@ describe('TweetService', () => {
     } as unknown as jest.Mocked<QueryRunner>;
 
     dataSource.createQueryRunner.mockReturnValue(queryRunner);
-    cacheManager = module.get(CACHE_MANAGER);
   });
 
   afterEach(() => {
