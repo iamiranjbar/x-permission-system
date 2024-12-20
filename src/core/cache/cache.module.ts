@@ -16,7 +16,7 @@ import * as process from 'node:process';
         });
         return {
           store: store as unknown as CacheStore,
-          ttl: parseInt(process.env.REDIS_TTL, 10) || 300,
+          ttl: parseInt(process.env.REDIS_TTL, 10) || 300000,
         };
       },
     }),
