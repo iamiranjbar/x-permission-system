@@ -1,5 +1,10 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import 'src/core/config/env.loader';
+import { User } from '../../modules/user/entities/user.entity';
+import { Group } from '../../modules/group/entities/group.entity';
+import { GroupMembership } from '../../modules/group/entities/group-membership.entity';
+import { Tweet } from '../../modules/tweet/entities/tweet.entity';
+import { Permission } from '../../modules/permission/entities/permission.entity';
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
@@ -11,7 +16,7 @@ export const dbConfig: DataSourceOptions = {
   synchronize: process.env.DB_SYNC === 'true',
   migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
   migrations: ['dist/core/database/migrations/**/*.js'],
-  entities: ['dist/modules/**/**/*.entity{.js,.ts}'],
+  entities: [User, Group, GroupMembership, Tweet, Permission],
   logging: process.env.DB_LOGGING === 'true',
 };
 
