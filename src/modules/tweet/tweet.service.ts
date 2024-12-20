@@ -13,7 +13,12 @@ import {
   Repository,
 } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
-import { CreateTweetDto, PaginatedTweet, TweetDto } from './dto/tweet.dto';
+import {
+  CreateTweetDto,
+  FilterTweet,
+  PaginatedTweet,
+  TweetDto,
+} from './dto/tweet.dto';
 import { Errors } from '../../core/constants/errors';
 import { User } from '../user/entities/user.entity';
 import { PermissionService } from '../permission/permission.service';
@@ -145,6 +150,7 @@ export class TweetService {
     userId: string,
     limit: number,
     page: number,
+    filters?: FilterTweet,
   ): Promise<PaginatedTweet> {
     if (limit <= 0) throw new BadRequestException(Errors.Tweet.NegativeLimit);
     if (page <= 0) throw new BadRequestException(Errors.Tweet.NegativePage);
@@ -154,24 +160,26 @@ export class TweetService {
     const userGroupIds: string[] =
       await this.groupService.getAllGroupIdsForUser(userId);
 
-    const query = `
-    WITH RECURSIVE tweet_hierarchy AS (
-      -- Base case: Start with tweets
-      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
-      FROM tweets t
-      WHERE t."inheritViewPermissions" = false
+    // Dynamic filtering conditions
+    const filterConditions: string[] = [];
+    if (filters?.authorId) {
+      filterConditions.push(`t."authorId" = '${filters.authorId}'`);
+    }
+    if (filters?.hashtag) {
+      filterConditions.push(`'#${filters.hashtag}' = ANY(t."hashtags")`);
+    }
+    if (filters?.parentTweetId) {
+      filterConditions.push(`t."parentTweetId" = '${filters.parentTweetId}'`);
+    }
+    if (filters?.category) {
+      filterConditions.push(`t."category" = '${filters.category}'`);
+    }
+    if (filters?.location) {
+      filterConditions.push(`t."location" = '${filters.location}'`);
+    }
 
-      UNION ALL
-
-      -- Recursive case: Find parent tweets
-      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
-      FROM tweets t
-      INNER JOIN tweet_hierarchy th ON th.id = t."parentTweetId"
-    )
-    SELECT DISTINCT t.*
-    FROM tweets t
-    LEFT JOIN permissions p ON p."tweetId" = t.id
-    WHERE (
+    const whereClause = `
+    (
       -- Explicit permissions
       (p."permittedId" = $1 AND p."permissionType" = $4)
       OR (p."permittedId" = ANY($2) AND p."permissionType" = $4)
@@ -192,9 +200,30 @@ export class TweetService {
         AND t."parentTweetId" IS NULL
       )
     )
+    ${filterConditions.length > 0 ? `AND ${filterConditions.join(' AND ')}` : ''}
+  `;
+
+    const query = `
+    WITH RECURSIVE tweet_hierarchy AS (
+      -- Base case: Start with tweets
+      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
+      FROM tweets t
+      WHERE t."inheritViewPermissions" = false
+
+      UNION ALL
+
+      -- Recursive case: Find parent tweets
+      SELECT t.id, t."parentTweetId", t."inheritViewPermissions"
+      FROM tweets t
+      INNER JOIN tweet_hierarchy th ON th.id = t."parentTweetId"
+    )
+    SELECT DISTINCT t.*
+    FROM tweets t
+    LEFT JOIN permissions p ON p."tweetId" = t.id
+    WHERE ${whereClause}
     ORDER BY t."createdAt" DESC
     LIMIT $3 OFFSET $5;
-    `;
+  `;
 
     const tweets = await this.tweetRepository.query(query, [
       userId, // $1: User ID
@@ -206,6 +235,7 @@ export class TweetService {
 
     const hasNextPage = tweets.length > limit;
     const nodes = hasNextPage ? tweets.slice(0, limit) : tweets;
+
     return {
       nodes,
       hasNextPage,

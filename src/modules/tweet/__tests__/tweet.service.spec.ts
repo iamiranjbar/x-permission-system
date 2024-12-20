@@ -3,14 +3,15 @@ import { TweetService } from '../tweet.service';
 import { PermissionService } from '../../permission/permission.service';
 import { UserService } from '../../user/user.service';
 import { GroupService } from '../../group/group.service';
-import { Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, QueryRunner } from 'typeorm';
 import { Tweet } from '../entities/tweet.entity';
 import { User } from '../../user/entities/user.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PermissionType } from '../../permission/enums/permission.enum';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { FilterTweet } from '../dto/tweet.dto';
+import { TweetCategory } from '../enums/tweet-category.enum';
 
 describe('TweetService', () => {
   let tweetService: TweetService;
@@ -271,7 +272,7 @@ describe('TweetService', () => {
     });
 
     it('should fetch permission and cache it if not in cache', async () => {
-      mockCacheManager.get.mockResolvedValue(null);
+      mockCacheManager.get.mockResolvedValue(undefined);
       permissionService.canEditTweet.mockResolvedValue(true);
 
       const result = await tweetService.canEditTweet('user1', 'tweet1');
@@ -289,6 +290,114 @@ describe('TweetService', () => {
         600 * 1000,
       );
       expect(result).toBe(true);
+    });
+  });
+
+  describe('paginateTweets - Filters', () => {
+    it('should apply filter by authorId', async () => {
+      const userId = 'user1';
+      const filters = { authorId: 'author1' };
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`t."authorId" = 'author1'`);
+    });
+
+    it('should apply filter by hashtag', async () => {
+      const userId = 'user1';
+      const filters = { hashtag: 'example' };
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`'#example' = ANY(t."hashtags")`);
+    });
+
+    it('should apply filter by parentTweetId', async () => {
+      const userId = 'user1';
+      const filters = { parentTweetId: 'parent123' };
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`t."parentTweetId" = 'parent123'`);
+    });
+
+    it('should apply filter by category', async () => {
+      const userId = 'user1';
+      const filters: FilterTweet = {
+        category: TweetCategory.Tech,
+      } as FilterTweet;
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`t."category" = 'Tech'`);
+    });
+
+    it('should apply filter by location', async () => {
+      const userId = 'user1';
+      const filters = { location: 'San Francisco' };
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`t."location" = 'San Francisco'`);
+    });
+
+    it('should handle multiple filters together', async () => {
+      const userId = 'user1';
+      const filters = {
+        authorId: 'author1',
+        hashtag: 'example',
+        parentTweetId: 'parent123',
+        category: TweetCategory.Tech,
+        location: 'San Francisco',
+      };
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, filters);
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).toContain(`t."authorId" = 'author1'`);
+      expect(queryCall).toContain(`'#example' = ANY(t."hashtags")`);
+      expect(queryCall).toContain(`t."parentTweetId" = 'parent123'`);
+      expect(queryCall).toContain(`t."category" = 'Tech'`);
+      expect(queryCall).toContain(`t."location" = 'San Francisco'`);
+    });
+
+    it('should not apply any filters if none are provided', async () => {
+      const userId = 'user1';
+
+      jest.spyOn(tweetRepository, 'query').mockResolvedValue([]);
+
+      await tweetService.paginateTweets(userId, 10, 1, {});
+
+      const queryMock = tweetRepository.query as jest.Mock;
+      const queryCall = queryMock.mock.calls[0][0]; // Capture the query string
+      expect(queryCall).not.toContain(`t."authorId" =`);
+      expect(queryCall).not.toContain(`'#example' = ANY(t."hashtags")`);
+      expect(queryCall).not.toContain(`t."parentTweetId" =`);
+      expect(queryCall).not.toContain(`t."category" =`);
+      expect(queryCall).not.toContain(`t."location" =`);
     });
   });
 });
