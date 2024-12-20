@@ -10,6 +10,7 @@ import { Tweet } from '../../tweet/entities/tweet.entity';
 import { User } from '../../user/entities/user.entity';
 import { PermissionType } from '../enums/permission.enum';
 import { NotFoundException } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('PermissionService', () => {
   let service: PermissionService;
@@ -19,6 +20,16 @@ describe('PermissionService', () => {
   let userService: UserService;
   let dataSourceMock: DataSource;
   let queryRunnerMock: any;
+  let cacheManager: Partial<Record<keyof Cache, jest.Mock>>;
+
+  const mockCacheManager = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    store: {
+      keys: jest.fn(),
+    },
+  };
 
   beforeEach(async () => {
     queryRunnerMock = {
@@ -70,6 +81,10 @@ describe('PermissionService', () => {
           provide: DataSource,
           useValue: dataSourceMock,
         },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
       ],
     }).compile();
 
@@ -80,6 +95,7 @@ describe('PermissionService', () => {
     groupService = module.get<GroupService>(GroupService);
     tweetService = module.get<TweetService>(TweetService);
     userService = module.get<UserService>(UserService);
+    cacheManager = module.get(CACHE_MANAGER);
   });
 
   it('should be defined', () => {
@@ -202,6 +218,7 @@ describe('PermissionService', () => {
         .mockResolvedValue(undefined);
       jest.spyOn(groupService, 'checkIdsValidity').mockResolvedValue(undefined);
       queryRunnerMock.manager.save.mockResolvedValue(undefined);
+      jest.spyOn(mockCacheManager.store as any, 'keys').mockResolvedValue([]);
 
       const result = await service.updateTweetPermissions('tweet1', {
         inheritViewPermissions: false,
@@ -260,6 +277,44 @@ describe('PermissionService', () => {
         user,
         PermissionType.Edit,
         queryRunnerMock,
+      );
+    });
+  });
+
+  describe('updateTweetPermissions - Cache Invalidation', () => {
+    it('should invalidate cache after updating permissions', async () => {
+      jest.spyOn(tweetService, 'getTweetById').mockResolvedValue({
+        id: 'tweet1',
+      } as Tweet);
+      jest
+        .spyOn(tweetService, 'updateTweetInheritance')
+        .mockResolvedValue(undefined);
+      jest.spyOn(groupService, 'checkIdsValidity').mockResolvedValue(undefined);
+      jest
+        .spyOn(mockCacheManager.store as any, 'keys')
+        .mockResolvedValue([
+          'permissions:tweet1:user1:edit',
+          'permissions:tweet1:user2:edit',
+        ]);
+      jest.spyOn(mockCacheManager, 'del').mockResolvedValue(undefined);
+
+      await service.updateTweetPermissions('tweet1', {
+        inheritViewPermissions: false,
+        inheritEditPermissions: false,
+        userViewPermissions: ['user1'],
+        groupViewPermissions: ['group1'],
+        userEditPermissions: ['user2'],
+        groupEditPermissions: ['group2'],
+      });
+
+      expect(mockCacheManager.store.keys).toHaveBeenCalledWith(
+        'permissions:tweet1:*',
+      );
+      expect(mockCacheManager.del).toHaveBeenCalledWith(
+        'permissions:tweet1:user1:edit',
+      );
+      expect(mockCacheManager.del).toHaveBeenCalledWith(
+        'permissions:tweet1:user2:edit',
       );
     });
   });

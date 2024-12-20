@@ -9,6 +9,7 @@ import { TweetService } from '../tweet/tweet.service';
 import { User } from '../user/entities/user.entity';
 import { GroupService } from '../group/group.service';
 import { UserService } from '../user/user.service';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class PermissionService {
@@ -21,6 +22,8 @@ export class PermissionService {
     private readonly tweetService: TweetService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
 
   async updateTweetPermissions(
@@ -60,6 +63,7 @@ export class PermissionService {
         );
       }
       await queryRunner.commitTransaction();
+      await this.invalidatePermissionCache(tweetId);
       return true;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -178,34 +182,55 @@ export class PermissionService {
     userId: string,
     tweetId: string,
   ): Promise<boolean> {
-    const userHasEditPermission = await this.permissionRepository.findOne({
-      where: {
-        tweet: { id: tweetId },
-        permissionType: PermissionType.Edit,
-        permittedId: userId,
-      },
-    });
+    const cacheKey = `permissions:${tweetId}:${userId}:explicit_edit`;
+    return await this.getCachedPermission(cacheKey, async () => {
+      const userPermission = await this.permissionRepository.findOne({
+        where: {
+          tweet: { id: tweetId },
+          permissionType: PermissionType.Edit,
+          permittedId: userId,
+        },
+      });
 
-    if (userHasEditPermission) {
-      return true;
-    }
+      return !!userPermission;
+    });
   }
+
+  // private async userHasGroupEditPermission(
+  //   userId: string,
+  //   tweetId: string,
+  // ): Promise<boolean> {
+  //   // Check if the user belongs to a group with edit permissions
+  //   const userGroupIds = await this.groupService.getAllGroupIdsForUser(userId);
+  //   const groupHasEditPermission = await this.permissionRepository.findOne({
+  //     where: {
+  //       tweet: { id: tweetId },
+  //       permissionType: PermissionType.Edit,
+  //       permittedId: In(userGroupIds),
+  //     },
+  //   });
+  //
+  //   return !!groupHasEditPermission;
+  // }
 
   private async userHasGroupEditPermission(
     userId: string,
     tweetId: string,
   ): Promise<boolean> {
-    // Check if the user belongs to a group with edit permissions
-    const userGroupIds = await this.groupService.getAllGroupIdsForUser(userId);
-    const groupHasEditPermission = await this.permissionRepository.findOne({
-      where: {
-        tweet: { id: tweetId },
-        permissionType: PermissionType.Edit,
-        permittedId: In(userGroupIds),
-      },
-    });
+    const cacheKey = `permissions:${tweetId}:${userId}:group_edit`;
+    return await this.getCachedPermission(cacheKey, async () => {
+      const userGroupIds =
+        await this.groupService.getAllGroupIdsForUser(userId);
+      const groupPermission = await this.permissionRepository.findOne({
+        where: {
+          tweet: { id: tweetId },
+          permissionType: PermissionType.Edit,
+          permittedId: In(userGroupIds),
+        },
+      });
 
-    return !!groupHasEditPermission;
+      return !!groupPermission;
+    });
   }
 
   public async canEditTweet(userId: string, tweetId: string): Promise<boolean> {
@@ -223,5 +248,29 @@ export class PermissionService {
     }
 
     return await this.userHasGroupEditPermission(userId, tweetId);
+  }
+
+  private async invalidatePermissionCache(tweetId: string): Promise<void> {
+    const keys = await this.cacheManager.store.keys(`permissions:${tweetId}:*`);
+    for (const key of keys) {
+      await this.cacheManager.del(key);
+    }
+  }
+
+  private async getCachedPermission(
+    cacheKey: string,
+    fetchFn: () => Promise<boolean>,
+  ): Promise<boolean> {
+    const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
+
+    if (cachedResult !== undefined) {
+      console.log(`Cache hit for key: ${cacheKey}`);
+      return cachedResult;
+    }
+
+    console.log(`Cache miss for key: ${cacheKey}`);
+    const result = await fetchFn();
+    await this.cacheManager.set(cacheKey, result, { ttl: 600 }); // Cache for 10 minutes
+    return result;
   }
 }
